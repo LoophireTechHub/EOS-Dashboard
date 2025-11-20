@@ -258,6 +258,46 @@
             color: #0c5aa0;
         }
 
+        .goal-descriptions {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 20px;
+            border-radius: 6px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .goal-descriptions h3 {
+            color: #e65100;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .goal-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ffe0b2;
+        }
+
+        .goal-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+
+        .goal-item strong {
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .goal-item .consequence {
+            color: #d84315;
+            font-size: 0.9em;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
         @media (max-width: 768px) {
             .form-row {
                 grid-template-columns: 1fr;
@@ -295,7 +335,7 @@
             </div>
 
             <div class="role-selector">
-                <button class="role-btn active" onclick="selectRole('ceo')">👤 CEO</button>
+                <button class="role-btn active" onclick="selectRole('ceo')">👤 Operations</button>
                 <button class="role-btn" onclick="selectRole('recruiter')">🎯 Recruiter</button>
                 <button class="role-btn" onclick="selectRole('bdr')">📞 BDR</button>
                 <button class="role-btn" onclick="selectRole('marketing')">📱 Marketing</button>
@@ -303,11 +343,35 @@
 
             <!-- CEO FORM -->
             <form id="ceoForm" class="form-section active" onsubmit="handleSubmit(event, 'ceo')">
-                <h2 style="margin-bottom: 20px; color: #333;">Chris - CEO Weekly Submission</h2>
+                <h2 style="margin-bottom: 20px; color: #333;">Operations - Weekly Submission</h2>
 
                 <div class="form-group">
                     <label>Email</label>
                     <input type="email" id="ceoEmail" placeholder="chris@loophire.com" required>
+                </div>
+
+                <div class="goal-descriptions">
+                    <h3>📊 Goal Breakdown & Accountability</h3>
+
+                    <div class="goal-item">
+                        <strong>💰 Revenue (Monthly) - $100K+</strong>
+                        <div class="consequence">⚠️ Miss 2 months = reassess strategy in emergency meeting</div>
+                    </div>
+
+                    <div class="goal-item">
+                        <strong>🤝 New Client Meetings - 4/week</strong>
+                        <div class="consequence">⚠️ Miss 3 weeks = BDR isn't working or you're not closing</div>
+                    </div>
+
+                    <div class="goal-item">
+                        <strong>📋 Active Searches - 8-12</strong>
+                        <div class="consequence">⚠️ Below 8 = pipeline problem, above 12 = capacity problem</div>
+                    </div>
+
+                    <div class="goal-item">
+                        <strong>📊 Placement Rate - 25%+</strong>
+                        <div class="consequence">⚠️ Below 20% = quality of clients or candidates is off</div>
+                    </div>
                 </div>
 
                 <div class="form-row">
