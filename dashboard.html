@@ -476,19 +476,6 @@
                     </div>
 
                     <div class="metric-card">
-                        <h4>👥 Client Calls</h4>
-                        <div class="form-group">
-                            <label>Goal: 8/week</label>
-                            <div class="input-row">
-                                <input type="number" id="recruiterCalls" placeholder="0" required oninput="updateStatus('recruiterCalls', 8, 'recruiterCallsStatus')">
-                                <span id="recruiterCallsStatus" class="status-badge"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="metric-card">
                         <h4>📅 Interviews Scheduled</h4>
                         <div class="form-group">
                             <label>Goal: 3/week</label>
@@ -498,26 +485,28 @@
                             </div>
                         </div>
                     </div>
+                </div>
 
+                <div class="form-row">
                     <div class="metric-card">
                         <h4>💼 Placements This Month</h4>
                         <div class="form-group">
-                            <label>Goal: 1-2/month</label>
+                            <label>Goal: 3/month</label>
                             <div class="input-row">
-                                <input type="number" id="recruiterPlacements" placeholder="0" required oninput="updateStatusRange('recruiterPlacements', 1, 2, 'recruiterPlacementsStatus')">
+                                <input type="number" id="recruiterPlacements" placeholder="0" required oninput="updateStatus('recruiterPlacements', 3, 'recruiterPlacementsStatus')">
                                 <span id="recruiterPlacementsStatus" class="status-badge"></span>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="metric-card">
-                    <h4>💰 Monthly Billings</h4>
-                    <div class="form-group">
-                        <label>Goal: $20K+</label>
-                        <div class="input-row">
-                            <input type="number" id="recruiterBillings" placeholder="0" step="0.01" required oninput="updateStatus('recruiterBillings', 20000, 'recruiterBillingsStatus')">
-                            <span id="recruiterBillingsStatus" class="status-badge"></span>
+                    <div class="metric-card">
+                        <h4>💰 Total Fees from Placements</h4>
+                        <div class="form-group">
+                            <label>Goal: $75K+</label>
+                            <div class="input-row">
+                                <input type="number" id="recruiterBillings" placeholder="0" step="0.01" required oninput="updateStatus('recruiterBillings', 75000, 'recruiterBillingsStatus')">
+                                <span id="recruiterBillingsStatus" class="status-badge"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
