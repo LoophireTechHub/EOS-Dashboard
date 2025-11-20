@@ -38,7 +38,7 @@ app.add_middleware(
 # CONFIGURATION
 # ============================================================================
 
-SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")  # Set this in your environment
+SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")  # Bot User OAuth Token
 SLACK_CHANNEL_GENERAL = os.getenv("SLACK_CHANNEL_GENERAL", "#accountability")
 SLACK_CHANNEL_LEADERSHIP = os.getenv("SLACK_CHANNEL_LEADERSHIP", "#leadership")
 DATABASE_PATH = "loophire_kpi.db"
@@ -161,19 +161,30 @@ def init_database():
 # ============================================================================
 
 def send_slack_message(message: str, channel: str = SLACK_CHANNEL_GENERAL, user_id: Optional[str] = None):
-    """Send message to Slack channel"""
-    if not SLACK_WEBHOOK_URL:
-        logger.warning("SLACK_WEBHOOK_URL not configured")
+    """Send message to Slack channel using Bot Token API"""
+    if not SLACK_BOT_TOKEN:
+        logger.warning("SLACK_BOT_TOKEN not configured")
         return False
 
     try:
+        url = "https://api.slack.com/api/chat.postMessage"
+        headers = {
+            "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
+            "Content-Type": "application/json"
+        }
         payload = {
-            "channel": channel if not user_id else f"@{user_id}",
+            "channel": channel if not user_id else user_id,
             "text": message,
             "mrkdwn": True
         }
-        response = requests.post(SLACK_WEBHOOK_URL, json=payload)
+        response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
+
+        result = response.json()
+        if not result.get("ok"):
+            logger.error(f"Slack API error: {result.get('error')}")
+            return False
+
         return True
     except Exception as e:
         logger.error(f"Failed to send Slack message: {e}")

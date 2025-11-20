@@ -105,16 +105,41 @@ The application will start on `http://localhost:8000`
 
 ## 🔧 Slack Setup
 
-### Create Slack Webhook
+### Get Your Bot Token
 
-1. Go to https://api.slack.com/apps
-2. Click **"Create New App"** → **"From scratch"**
-3. Name it "Loophire EOS KPI Bot"
-4. Select your workspace
-5. Click **"Incoming Webhooks"** → Enable
-6. Click **"Add New Webhook to Workspace"**
-7. Select the channel (`#accountability`)
-8. Copy the webhook URL to your `.env` file
+You already have a Slack app created! Now you need to get the Bot User OAuth Token:
+
+1. Go to your app: https://api.slack.com/apps/A09V1G92CRW
+2. In the left sidebar, click **"OAuth & Permissions"**
+3. Scroll to **"Bot User OAuth Token"**
+4. Click **"Install to Workspace"** (if not already installed)
+5. Copy the token starting with `xoxb-`
+6. Add it to your `.env` file:
+   ```bash
+   SLACK_BOT_TOKEN=xoxb-your-token-here
+   ```
+
+### Configure Bot Permissions (Scopes)
+
+Your bot needs these scopes (should already be configured):
+
+1. Go to **"OAuth & Permissions"** → **"Scopes"**
+2. Under **"Bot Token Scopes"**, add:
+   - `chat:write` - Send messages
+   - `chat:write.public` - Send messages to channels the bot isn't in
+   - `channels:read` - View basic channel info
+
+3. Click **"Reinstall to Workspace"** if you added new scopes
+
+### Invite Bot to Channels
+
+```bash
+/invite @Loophire EOS KPI Bot
+```
+
+Run this command in:
+- `#accountability` channel
+- `#leadership` channel
 
 ### Test Slack Integration
 
