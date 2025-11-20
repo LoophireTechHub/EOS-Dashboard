@@ -18,6 +18,10 @@ from pathlib import Path
 import requests
 from apscheduler.schedulers.background import BackgroundScheduler
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -38,9 +42,6 @@ app.add_middleware(
 # CONFIGURATION
 # ============================================================================
 
-SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")  # Bot User OAuth Token
-SLACK_CHANNEL_GENERAL = os.getenv("SLACK_CHANNEL_GENERAL", "#accountability")
-SLACK_CHANNEL_LEADERSHIP = os.getenv("SLACK_CHANNEL_LEADERSHIP", "#leadership")
 DATABASE_PATH = "loophire_kpi.db"
 TIMEZONE = pytz.timezone("America/Chicago")
 
@@ -157,97 +158,6 @@ def init_database():
     conn.close()
 
 # ============================================================================
-# SLACK INTEGRATION
-# ============================================================================
-
-def send_slack_message(message: str, channel: str = SLACK_CHANNEL_GENERAL, user_id: Optional[str] = None):
-    """Send message to Slack channel using Bot Token API"""
-    if not SLACK_BOT_TOKEN:
-        logger.warning("SLACK_BOT_TOKEN not configured")
-        return False
-
-    try:
-        url = "https://api.slack.com/api/chat.postMessage"
-        headers = {
-            "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "channel": channel if not user_id else user_id,
-            "text": message,
-            "mrkdwn": True
-        }
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
-
-        result = response.json()
-        if not result.get("ok"):
-            logger.error(f"Slack API error: {result.get('error')}")
-            return False
-
-        return True
-    except Exception as e:
-        logger.error(f"Failed to send Slack message: {e}")
-        return False
-
-def send_kpi_reminder(role: str, submission_type: str = "weekly"):
-    """Send KPI submission reminder to Slack"""
-    if submission_type == "weekly_kickoff":
-        message = f"""🚀 **LOOPHIRE WEEKLY SCORECARD CHECK-IN**
-Week of {get_current_week()}
-
-Hey team, time to report your numbers. This is how we win—transparency + accountability.
-
-📋 Submit your metrics here: https://your-domain.com/dashboard
-
-⏱️ Deadline: 8:00 AM (9:00 AM L10 meeting)
-
-Click the link above and select your role. No excuses—just numbers.
-
-React with ✅ when submitted."""
-
-    elif submission_type == "midweek_check":
-        message = f"""⚡ **MID-WEEK REALITY CHECK**
-
-We're halfway through the week. Are you on pace to hit your goals?
-
-📊 Update your progress: https://your-domain.com/dashboard
-
-🟢 On track or ahead
-🟡 Close but need a push
-🔴 Off track, need help
-
-React with 🟢🟡 or 🔴"""
-
-    send_slack_message(message, SLACK_CHANNEL_GENERAL)
-
-def send_escalation_alert(person_name: str, email: str, role: str, metrics_missed: List[str], alert_type: str = "yellow"):
-    """Send RED/YELLOW alert when metrics miss"""
-    if alert_type == "yellow":
-        emoji = "⚠️"
-        title = "COACHING ALERT"
-        message = f"{emoji} **{title}** - {person_name}\n\n"
-        message += f"Heads up: We're seeing a pattern on your metrics.\n\n"
-        message += "📊 Last 2 weeks below target:\n"
-        for metric in metrics_missed:
-            message += f"  • {metric}\n"
-        message += "\nThis triggers a 1-on-1 coaching conversation. We're here to help.\n"
-        message += f"@Chris will reach out to schedule.\n"
-        message += f"Slack: {email}"
-
-    elif alert_type == "red":
-        emoji = "🚨"
-        title = "PERFORMANCE ALERT"
-        message = f"{emoji} **{title}** - {person_name}\n\n"
-        message += f"We need to talk. Here's what the numbers show:\n\n"
-        for metric in metrics_missed:
-            message += f"  📉 {metric}: Off goal for 4+ weeks\n"
-        message += f"\nThis is a Performance Improvement Plan trigger.\n"
-        message += f"@Chris will reach out to schedule.\n"
-
-    send_slack_message(message, SLACK_CHANNEL_LEADERSHIP)
-
-# ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
 
@@ -273,25 +183,7 @@ def calculate_status(actual: float, goal: float, metric_type: str = "min") -> st
         return "🟡"
     return "🔴"
 
-def check_escalations(role: str, email: str, person_name: str, metrics: Dict):
-    """Check if any metrics missed for 2+ or 4+ weeks"""
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-
-    # Get last 4 weeks of submissions
-    cursor.execute('''
-        SELECT metrics FROM kpi_submissions
-        WHERE email = ? AND role = ?
-        ORDER BY submitted_at DESC
-        LIMIT 4
-    ''', (email, role))
-
-    recent_submissions = cursor.fetchall()
-    conn.close()
-
-    # TODO: Implement 2-week and 4-week miss tracking logic
-    # This would compare current metrics against goals
-    # and flag if below threshold for consecutive weeks
+# Escalation tracking removed with Slack integration
 
 # ============================================================================
 # ROUTES
@@ -299,9 +191,8 @@ def check_escalations(role: str, email: str, person_name: str, metrics: Dict):
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database and start scheduler"""
+    """Initialize database"""
     init_database()
-    start_scheduler()
 
 @app.get("/")
 async def root():
@@ -329,14 +220,6 @@ async def submit_kpi(submission: KPISubmission):
         conn.commit()
         submission_id = cursor.lastrowid
         conn.close()
-
-        # Check for escalations
-        check_escalations(
-            submission.role,
-            submission.metrics.get("email"),
-            submission.metrics.get("name", "Chris"),
-            submission.metrics
-        )
 
         return {
             "status": "success",
@@ -450,95 +333,7 @@ async def get_all_team_kpis(week_of: Optional[str] = None):
         logger.error(f"Error fetching team KPIs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/api/slack/send-reminder")
-async def trigger_slack_reminder(submission_type: str = "weekly_kickoff"):
-    """Manually trigger Slack reminder (for testing)"""
-    try:
-        send_kpi_reminder("all", submission_type)
-        return {"status": "success", "message": "Reminder sent"}
-    except Exception as e:
-        logger.error(f"Error sending reminder: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# ============================================================================
-# SCHEDULER
-# ============================================================================
-
-def schedule_slack_reminders():
-    """Schedule automated Slack reminders"""
-    scheduler = BackgroundScheduler(timezone=TIMEZONE)
-
-    # Monday 7:30 AM - 30 minute warning
-    scheduler.add_job(
-        lambda: send_kpi_reminder("all", "weekly_kickoff"),
-        "cron",
-        day_of_week="mon",
-        hour=7,
-        minute=30,
-        id="monday_730_reminder"
-    )
-
-    # Monday 8:00 AM - Hard deadline
-    scheduler.add_job(
-        lambda: send_slack_message(
-            f"""🚨 **LOOPHIRE WEEKLY SCORECARD - SUBMISSION DEADLINE**
-
-Scorecards due NOW for 9:00 AM L10 meeting.
-
-📊 Submit immediately: https://your-domain.com/dashboard
-
-This is how we track accountability. Let's go.
-
-React with ✅ when done.""",
-            SLACK_CHANNEL_GENERAL
-        ),
-        "cron",
-        day_of_week="mon",
-        hour=8,
-        minute=0,
-        id="monday_800_deadline"
-    )
-
-    # Wednesday 3:30 PM - Mid-week reminder
-    scheduler.add_job(
-        lambda: send_kpi_reminder("all", "midweek_check"),
-        "cron",
-        day_of_week="wed",
-        hour=15,
-        minute=30,
-        id="wednesday_330_reminder"
-    )
-
-    # Wednesday 4:00 PM - Mid-week deadline
-    scheduler.add_job(
-        lambda: send_slack_message(
-            f"""📊 **MID-WEEK REALITY CHECK - Submission Deadline**
-
-Update your KPI progress immediately.
-
-🔗 https://your-domain.com/dashboard
-
-🟢 = On pace | 🟡 = Close | 🔴 = Off track
-
-If RED, reply with your recovery plan.""",
-            SLACK_CHANNEL_GENERAL
-        ),
-        "cron",
-        day_of_week="wed",
-        hour=16,
-        minute=0,
-        id="wednesday_400_deadline"
-    )
-
-    scheduler.start()
-    logger.info("Slack reminder scheduler started")
-
-def start_scheduler():
-    """Start background scheduler"""
-    try:
-        schedule_slack_reminders()
-    except Exception as e:
-        logger.error(f"Failed to start scheduler: {e}")
+# Slack integration removed - dashboard-only mode
 
 # ============================================================================
 # RUN
