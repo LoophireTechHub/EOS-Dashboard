@@ -199,6 +199,11 @@ async def root():
     """Return dashboard HTML"""
     return FileResponse("dashboard.html")
 
+@app.get("/reports")
+async def reports():
+    """Return leadership reports dashboard"""
+    return FileResponse("reports.html")
+
 @app.post("/api/kpi/submit")
 async def submit_kpi(submission: KPISubmission):
     """Submit KPI metrics"""
